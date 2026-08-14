@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" role="img" aria-label="Zamonaviy divan reklamasi">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1"><stop stop-color="#073f42"/><stop offset=".58" stop-color="#07545a"/><stop offset="1" stop-color="#0a3233"/></linearGradient>
+    <linearGradient id="seat" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#167582"/><stop offset="1" stop-color="#07515d"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-30%" width="140%" height="170%"><feDropShadow dx="0" dy="14" stdDeviation="13" flood-color="#001b1d" flood-opacity=".48"/></filter>
+  </defs>
+  <rect width="1200" height="500" fill="url(#bg)"/>
+  <circle cx="1030" cy="90" r="240" fill="#1b6c63" opacity=".22"/>
+  <path d="M0 438h1200v62H0z" fill="#d6c7a9" opacity=".42"/>
+  <g transform="translate(470 118)" filter="url(#shadow)">
+    <rect x="42" y="62" width="585" height="220" rx="46" fill="#0a5360"/>
+    <rect x="67" y="77" width="270" height="145" rx="38" fill="url(#seat)"/>
+    <rect x="346" y="77" width="255" height="145" rx="38" fill="url(#seat)"/>
+    <rect x="70" y="200" width="527" height="106" rx="34" fill="#0c6370"/>
+    <rect x="0" y="152" width="108" height="154" rx="42" fill="#0b5b68"/>
+    <rect x="580" y="152" width="108" height="154" rx="42" fill="#0b5b68"/>
+    <rect x="80" y="300" width="28" height="40" rx="5" fill="#173b3a"/>
+    <rect x="570" y="300" width="28" height="40" rx="5" fill="#173b3a"/>
+    <g transform="translate(445 102) rotate(8)">
+      <rect width="110" height="105" rx="20" fill="#e3a82c"/>
+      <path d="M18 22c24 18 50 18 75 0M17 77c27-18 52-18 78 0" fill="none" stroke="#f6c85d" stroke-width="4" opacity=".7"/>
+    </g>
+  </g>
+  <g transform="translate(1060 70)">
+    <rect x="-18" y="300" width="96" height="112" rx="9" fill="#c8b397"/>
+    <path d="M28 308C8 232-12 180 2 82M32 305c24-82 65-139 72-220M24 306c3-105 9-185 41-274M35 305c-6-96-26-172-60-222" fill="none" stroke="#47734c" stroke-width="13" stroke-linecap="round"/>
+    <path d="M1 86c-39-11-55-34-49-67 37 2 59 23 49 67M103 87c28-29 56-37 84-20-13 35-40 48-84 20M64 35c-6-34 5-58 34-72 20 28 9 53-34 72M-24 83c-25-27-54-31-82-11 18 34 46 38 82 11" fill="#5b925f"/>
+  </g>
+</svg>

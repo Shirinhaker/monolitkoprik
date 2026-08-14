@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#071310">
+  <title>Ko‘prik Admin</title>
+  <link rel="stylesheet" href="/admin-assets/styles.css">
+</head>
+<body>
+  <!-- ADMIN BUILD: v1654 -->
+  <section class="login-shell" id="loginCard">
+    <div class="login-brand"><span class="brand-mark">K</span><strong>Ko‘prik</strong><small>ADMIN</small></div>
+    <div class="login-card">
+      <div class="eyebrow">XAVFSIZ KIRISH</div>
+      <h1>Admin paneli</h1>
+      <p>Bir martalik kod faqat ruxsat berilgan Telegram ID’ga yuboriladi.</p>
+      <form id="idForm">
+        <label for="tgId">Telegram ID</label>
+        <input id="tgId" inputmode="numeric" autocomplete="username" required>
+        <button type="submit">Kod yuborish</button>
+      </form>
+      <form id="codeForm" hidden>
+        <label for="code">6 xonali kod</label>
+        <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>
+        <button type="submit">Kirish</button>
+      </form>
+      <div class="message" id="message" role="status"></div>
+    </div>
+  </section>
+
+  <div class="admin-app" id="adminApp" hidden>
+    <header class="topbar">
+      <button class="icon-button nav-toggle" id="adminNavToggle" aria-label="Menyuni ochish" aria-expanded="false">☰</button>
+      <div class="topbar-brand"><span class="brand-mark">K</span><strong>Ko‘prik</strong><small>ADMIN</small></div>
+      <div class="topbar-actions">
+        <span class="admin-id" id="currentAdminId"></span>
+        <button class="secondary compact" type="button" id="logout">Chiqish</button>
+      </div>
+    </header>
+    <div class="app-grid">
+      <aside class="sidebar" id="adminSidebar" aria-label="Admin bo‘limlari">
+        <nav>
+          <button class="nav-item active" data-admin-page="dashboard"><span>⌂</span>Boshqaruv paneli</button>
+          <button class="nav-item" data-admin-page="payments"><span>₿</span>To‘lovlar</button>
+          <button class="nav-item" data-admin-page="pricing"><span>₸</span>Narxlar va usullar</button>
+          <button class="nav-item" data-admin-page="accounts"><span>♙</span>Profil va bizneslar</button>
+          <button class="nav-item" data-admin-page="content"><span>▦</span>Kontent</button>
+          <button class="nav-item" data-admin-page="reports"><span>⚑</span>Shikoyatlar</button>
+          <button class="nav-item" data-admin-page="audit"><span>≡</span>Audit tarixi</button>
+        </nav>
+        <div class="sidebar-note">Barcha o‘zgarishlar audit tarixiga yoziladi.</div>
+      </aside>
+      <div class="drawer-shade" id="drawerShade"></div>
+
+      <main class="workspace">
+        <section class="page active" data-page-panel="dashboard">
+          <div class="page-head"><div><div class="eyebrow">UMUMIY HOLAT</div><h1>Boshqaruv paneli</h1></div><button class="secondary refresh" data-refresh="dashboard">Yangilash</button></div>
+          <div class="metric-grid" id="dashboardMetrics"></div>
+          <div class="panel"><div class="panel-head"><h2>So‘nggi harakatlar</h2></div><div id="dashboardActivity" class="list-state">Yuklanmoqda…</div></div>
+        </section>
+
+        <section class="page" data-page-panel="payments">
+          <div class="page-head"><div><div class="eyebrow">MANUAL TEKSHIRUV</div><h1>To‘lovlar</h1></div></div>
+          <div class="filterbar">
+            <select id="paymentStatus"><option value="pending">Kutilayotgan</option><option value="">Barchasi</option><option value="approved">Tasdiqlangan</option><option value="rejected">Rad etilgan</option><option value="cancelled">Bekor qilingan</option></select>
+            <select id="paymentService"><option value="">Barcha xizmatlar</option><option value="subscription">Obuna</option><option value="advertisement">Reklama</option><option value="listing">E’lon</option></select>
+            <button id="loadPayments">Ko‘rsatish</button>
+          </div>
+          <div class="panel table-wrap"><table><thead><tr><th>Kod</th><th>Xizmat</th><th>Summa</th><th>Holat</th><th>Sana</th><th>Amal</th></tr></thead><tbody id="paymentsBody"></tbody></table></div>
+        </section>
+
+        <section class="page" data-page-panel="pricing">
+          <div class="page-head"><div><div class="eyebrow">SOZLAMALAR</div><h1>Narxlar va to‘lov usullari</h1></div></div>
+          <div class="split-grid">
+            <div class="panel"><div class="panel-head"><h2>Platforma narxlari</h2></div><div id="pricesList" class="settings-list"></div></div>
+            <div class="panel"><div class="panel-head"><h2>To‘lov rekvizitlari</h2><button class="secondary compact" id="newPaymentMethod">Yangi usul</button></div><div id="paymentMethodsList" class="settings-list"></div></div>
+          </div>
+        </section>
+
+        <section class="page" data-page-panel="accounts">
+          <div class="page-head"><div><div class="eyebrow">PROFILLAR</div><h1>Foydalanuvchilar va bizneslar</h1></div></div>
+          <div class="filterbar">
+            <select id="accountType"><option value="users">Foydalanuvchilar</option><option value="businesses">Bizneslar</option></select>
+            <input id="accountSearch" placeholder="Ism, login yoki Telegram ID">
+            <select id="accountStatus"><option value="">Barcha holatlar</option><option value="restricted">Cheklangan</option><option value="blocked">Bloklangan</option><option value="hidden">Publicdan yashirilgan</option></select>
+            <button id="loadAccounts">Qidirish</button>
+          </div>
+          <div class="master-detail"><div class="panel" id="accountsList"></div><div class="panel detail-panel" id="accountDetail"><div class="list-state">Profilni tanlang.</div></div></div>
+        </section>
+
+        <section class="page" data-page-panel="content">
+          <div class="page-head"><div><div class="eyebrow">REAKTIV MODERATSIYA</div><h1>Kontent</h1></div></div>
+          <div class="filterbar">
+            <select id="contentKind"><option value="product">Mahsulotlar</option><option value="service">Xizmatlar</option><option value="advertisement">Reklamalar</option><option value="business">Bizneslar</option><option value="profile">Profillar</option></select>
+            <select id="contentStatus"><option value="">Barcha holatlar</option><option value="visible">Ochiq</option><option value="hidden">Yashirilgan</option><option value="removed">Olib tashlangan</option></select>
+            <input id="contentSearch" placeholder="Nomi bo‘yicha qidirish">
+            <button id="loadContent">Ko‘rsatish</button>
+          </div>
+          <div class="panel" id="contentList"></div>
+        </section>
+
+        <section class="page" data-page-panel="reports">
+          <div class="page-head"><div><div class="eyebrow">KO‘RIB CHIQISH NAVBATI</div><h1>Shikoyatlar</h1></div></div>
+          <div class="filterbar"><select id="reportStatus"><option value="open">Ochiq</option><option value="reviewing">Tekshirilmoqda</option><option value="resolved">Hal qilingan</option><option value="dismissed">Rad etilgan</option><option value="all">Barchasi</option></select><button id="loadReports">Ko‘rsatish</button></div>
+          <div class="panel" id="reportsList"></div>
+        </section>
+
+        <section class="page" data-page-panel="audit">
+          <div class="page-head"><div><div class="eyebrow">O‘ZGARMAS TARIX</div><h1>Audit tarixi</h1></div><a class="button-link secondary" href="/api/admin/audit/export.csv" id="auditExport">CSV yuklash</a></div>
+          <div class="filterbar"><input id="auditAction" placeholder="Masalan: payment.approve"><input id="auditAdminId" inputmode="numeric" placeholder="Admin Telegram ID"><button id="loadAudit">Qidirish</button></div>
+          <div class="panel" id="auditList"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <dialog id="paymentReceiptDialog" class="modal wide">
+    <div class="modal-head"><div><div class="eyebrow">KVITANSIYA</div><h2 id="receiptTitle">To‘lov</h2></div><button class="icon-button" data-close="paymentReceiptDialog" aria-label="Yopish">×</button></div>
+    <img id="receiptImage" class="receipt-image" alt="To‘lov kvitansiyasi">
+    <div class="modal-actions" id="receiptActions"></div>
+  </dialog>
+  <dialog id="paymentDecisionDialog" class="modal">
+    <form method="dialog" id="decisionForm">
+      <div class="modal-head"><h2 id="decisionTitle">Qarorni tasdiqlang</h2><button class="icon-button" value="cancel" aria-label="Yopish">×</button></div>
+      <p id="decisionText"></p>
+      <label for="decisionReason">Sabab yoki izoh</label>
+      <textarea id="decisionReason" rows="4" maxlength="2000"></textarea>
+      <div class="modal-actions"><button type="button" class="secondary" data-close="paymentDecisionDialog">Bekor qilish</button><button type="submit" id="decisionSubmit">Tasdiqlash</button></div>
+    </form>
+  </dialog>
+  <dialog id="paymentMethodDialog" class="modal">
+    <form method="dialog" id="paymentMethodForm">
+      <div class="modal-head"><h2>To‘lov usuli</h2><button class="icon-button" value="cancel" aria-label="Yopish">×</button></div>
+      <input type="hidden" id="methodId">
+      <label for="methodName">Nomi</label><input id="methodName" required>
+      <label for="methodType">Turi</label><input id="methodType" value="manual_card" required>
+      <label for="methodRecipient">Qabul qiluvchi</label><input id="methodRecipient">
+      <label for="methodDetails">Rekvizitlar (JSON)</label><textarea id="methodDetails" rows="4">{}</textarea>
+      <label for="methodInstructions">Yo‘riqnoma</label><textarea id="methodInstructions" rows="3"></textarea>
+      <label class="check"><input type="checkbox" id="methodActive" checked> Faol</label>
+      <div class="modal-actions"><button type="button" class="secondary" data-close="paymentMethodDialog">Bekor qilish</button><button type="submit">Saqlash</button></div>
+    </form>
+  </dialog>
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+  <script src="/admin-assets/app.js" defer></script>
+</body>
+</html>
