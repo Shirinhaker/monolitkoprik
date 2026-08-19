@@ -1,11 +1,10 @@
-# Ko‘prik MVP v1656 — to‘liq kod
+# Ko‘prik v1656 — bo‘limlari ochilgan to‘liq kod
 
-Bu papka Ko‘prik loyihasining birinchi **onlaynlashtirish MVP** bosqichi
-uchun to‘liq, deploy qilinadigan manba kodidir. Arxiv ichida frontend,
-backend, admin panel, migratsiya, deploy konfiguratsiyasi, testlar va texnik
-hujjatlar birga beriladi.
+Bu repozitoriy Ko‘prik monolit loyihasining deploy qilinadigan to‘liq manba
+kodidir. Frontend, backend, admin panel, migratsiya va Railway konfiguratsiyasi
+birga saqlanadi.
 
-## MVPda faol
+## Faol bo‘limlar
 
 - ro‘yxatdan o‘tish, kirish va Telegram tasdiqlash;
 - oddiy, biznes va xodim profillari;
@@ -14,45 +13,86 @@ hujjatlar birga beriladi.
 - Plus/Pro obuna, reklama va qo‘lda to‘lov;
 - buyurtmalar, xizmat buyurtmalari va ularning ichki suhbati;
 - bildirishnomalar, sharhlar va profil shikoyatlari;
-- `admin.koprik.uz` admin paneli va moderatsiya.
-
-## MVPda yopiq
-
 - e’lon yaratish va E’lonlar sahifasi;
-- istoriya joylash va istoriya ko‘rish;
+- istoriya joylash, ko‘rish va arxiv;
 - umumiy suhbatlar;
 - tizimlashtirish bo‘limlari;
-- Taxi chaqirish va Taxi haydovchi kirish tugmalari.
+- Taxi chaqirish va Taxi haydovchi kirish tugmalari;
+- `admin.koprik.uz` admin paneli va moderatsiya.
 
-Yopiq bo‘limlarning mavjud ma’lumotlari o‘chirilmaydi. Keyin ochish uchun
-ularning kodlari feature guard ortida saqlangan. Taxi tugmalari ham
-foydalanuvchiga ko‘rsatilmaydi va to‘g‘ridan-to‘g‘ri ekran ochilishi
-frontendda bloklangan. Yetkazib berish/buyurtma backend oqimi saqlangan.
+## Ataylab o‘zgartirilmagan qismlar
 
-## v1656 o‘zgarishlari
+- **AI yordamchi** xavfsizlik sabab faqat privileged biznes profillarida
+  ko‘rinadi. Uning ruxsat tekshiruvi olib tashlanmagan.
+- **Hisobot** ekrani tayyor funksional modul emas; unda “Keyingi bosqich”
+  yozuvi bor. Ishlamaydigan bo‘sh ekran oddiy foydalanuvchiga ochilmagan.
+- admin autentifikatsiyasi, akkaunt bloklari, xodim vakolatlari va private
+  kvitansiya himoyasi saqlangan.
 
-- bosh sahifa Leaflet xaritasi `zoomControl:false` bilan ochiladi; shu sabab
-  telefon va kompyuterda `+ / −` tugmalari yaratilmaydi;
-- `taxiBtn` va `taxiCabBtn` `data-feature="taxi"` orqali yopilgan;
-- build javobida `taxi_call_enabled=false`;
-- to‘liq MVP manba paketi uchun ushbu hujjat qo‘shildi.
+## Feature flaglar
+
+Tayyor bo‘limlar odatda ochiq ishlaydi. Railway Variables orqali istalganini
+alohida vaqtincha yopish mumkin:
+
+```env
+MVP_LISTINGS_ENABLED=1
+MVP_STORIES_ENABLED=1
+MVP_CHAT_ENABLED=1
+MVP_SYSTEMIZATION_ENABLED=1
+MVP_TAXI_ENABLED=1
+```
+
+`1` — ochiq, `0` — yopiq. Frontend `/api/features` javobini yuklagach tegishli
+`data-feature` elementlarini ko‘rsatadi yoki yashiradi. Listings, stories, chat
+va tizimlashtirish backend API’lari ham server guard bilan himoyalangan.
+
+Taxi va dostavka bir xil `/api/driver` hamda `/api/rides` oqimlaridan
+foydalanadi. Shu sabab umumiy backend yo‘llari taxi flagi bilan to‘silmagan:
+Taxi kirish nuqtalari frontend flag bilan boshqariladi, dostavka oqimi esa
+buzilmaydi.
+
+## Eski bazadagi qulfni yechish
+
+Eski MVP migratsiyasi `platform_feature_flags` jadvaliga
+`updated_by_tg_id=0`, `enabled=0` ko‘rinishidagi texnik qulf yozuvlarini qo‘ygan
+bo‘lishi mumkin. Joriy kod bunday eski texnik yozuvlarning yangi Railway
+sozlamasini bosib ketishiga yo‘l qo‘ymaydi. Haqiqiy admin qo‘ygan override esa
+saqlanib qoladi.
+
+`migration_check.py` endi bo‘limlarni qayta yopmaydi. U backup yaratib, faqat
+eski texnik qulf yozuvlarini tozalaydi.
 
 ## Railway
 
-1. Kodni GitHub repozitoriyga yuklang.
-2. Railway Volume’ni `/data` manziliga ulang.
-3. `.env.production.example`dagi nomlarni Railway Variables’ga kiriting.
-4. `railpack.json` loyihaning start va `/readyz` healthcheck sozlamalarini
-   beradi.
+1. Railway Volume’ni `/data` manziliga ulang.
+2. `.env.production.example`dagi nomlarni Railway Variables’ga kiriting.
+3. Yuqoridagi beshta `MVP_*_ENABLED` qiymatini `1` qiling.
+4. `railpack.json` `unlocked_app:app` entrypointini va `/readyz` healthcheck’ni
+   boshqaradi.
 
-Sirlar, haqiqiy `.env`, production bazasi va foydalanuvchi uploadlari ZIPga
-kiritilmagan. Ular Railway Variables va Volume’da qolishi kerak.
+`/readyz` feature flaglar faqat yopiq bo‘lishini talab qilmaydi. U barcha
+kutilgan flaglar to‘g‘ri boolean holatda o‘qilganini tekshiradi, shuning uchun
+bo‘limlarni ochish Railway deploy’ini `Unhealthy` qilmaydi.
 
-## Lokal tekshiruv
+Tekshirish manzillari:
 
-```bash
-python -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python -m unittest discover -s tests
+```text
+/api/features
+/api/build
+/readyz
 ```
 
+`/api/features` natijasida quyidagilar `true` bo‘lishi kerak:
+
+```json
+{
+  "listings": true,
+  "stories": true,
+  "chat": true,
+  "systemization": true,
+  "taxi": true
+}
+```
+
+Sirlar, haqiqiy `.env`, production bazasi va foydalanuvchi uploadlari
+repozitoriyga kiritilmaydi. Ular Railway Variables va Volume’da qolishi kerak.
