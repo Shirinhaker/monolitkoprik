@@ -18,6 +18,9 @@ FEATURE_ENV_NAMES = {
 
 # Ushbu v1656 paketida tayyor bo‘limlar odatda ochiq. Railway Variables orqali
 # istalgan bo‘limni 0 qilib vaqtincha qayta yopish mumkin.
+UNLOCK_COMPLETED_SECTIONS_ENV = "MVP_UNLOCK_COMPLETED_SECTIONS"
+
+
 FEATURE_DEFAULTS = {
     "listings": True,
     "stories": True,
@@ -67,9 +70,18 @@ def ensure_feature_flag_schema(conn):
 
 
 def feature_env_snapshot(environ=None):
-    """Railway/environment bo‘yicha boshlang‘ich feature holatini qaytaradi."""
+    """Railway/environment bo‘yicha boshlang‘ich feature holatini qaytaradi.
+
+    Eski v1656 deployida to‘rtta ``MVP_*`` qiymatni ``0`` qilish production
+    validator talabi edi. Yangilanishdan keyin o‘sha legacy qiymatlar bo‘limlarni
+    qayta yopib qo‘ymasligi uchun master unlock default holatda yoqilgan.
+    Per-section flaglarni qayta boshqarish kerak bo‘lsa
+    ``MVP_UNLOCK_COMPLETED_SECTIONS=0`` qilinadi.
+    """
 
     env = os.environ if environ is None else environ
+    if env_flag(UNLOCK_COMPLETED_SECTIONS_ENV, True, env):
+        return dict(FEATURE_DEFAULTS)
     return {
         code: env_flag(env_name, FEATURE_DEFAULTS[code], env)
         for code, env_name in FEATURE_ENV_NAMES.items()
