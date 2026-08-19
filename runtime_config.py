@@ -15,6 +15,15 @@ from urllib.parse import urlparse
 
 
 TRUE_VALUES = {"1", "true", "yes", "on"}
+FALSE_VALUES = {"0", "false", "no", "off"}
+BOOLEAN_VALUES = TRUE_VALUES | FALSE_VALUES
+MVP_FEATURE_FLAG_NAMES = (
+    "MVP_LISTINGS_ENABLED",
+    "MVP_STORIES_ENABLED",
+    "MVP_CHAT_ENABLED",
+    "MVP_SYSTEMIZATION_ENABLED",
+    "MVP_TAXI_ENABLED",
+)
 INSECURE_SECRET_VALUES = {
     "",
     "platforma-webhook-secret",
@@ -119,14 +128,12 @@ def validate_runtime_config(
         errors.append("production rejimida TEST_MODE yoqilmasligi kerak")
     if str(env.get("TEST_OTP_CODE", "")).strip():
         errors.append("production rejimida TEST_OTP_CODE bo‘lmasligi kerak")
-    for flag_name in (
-        "MVP_LISTINGS_ENABLED",
-        "MVP_STORIES_ENABLED",
-        "MVP_CHAT_ENABLED",
-        "MVP_SYSTEMIZATION_ENABLED",
-    ):
-        if str(env.get(flag_name, "")).strip() != "0":
-            errors.append(f"{flag_name}=0 bo‘lishi kerak")
+    for flag_name in MVP_FEATURE_FLAG_NAMES:
+        raw_flag = str(env.get(flag_name, "1")).strip().lower()
+        if raw_flag not in BOOLEAN_VALUES:
+            errors.append(
+                f"{flag_name} boolean qiymat bo‘lishi kerak (0/1, false/true)"
+            )
 
     try:
         init_data_age = int(str(env.get("INIT_DATA_MAX_AGE_SEC", "86400")).strip())
