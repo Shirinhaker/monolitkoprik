@@ -14,6 +14,7 @@ from backup_database import (
     backup_manifest_path,
     create_database_backup,
 )
+from feature_flags import clear_legacy_mvp_lock_overrides
 
 
 REQUIRED_OBJECTS = {
@@ -133,13 +134,7 @@ def prepare_release_database(
 
     conn = sqlite3.connect(str(target), timeout=30)
     try:
-        conn.execute(
-            """
-            UPDATE platform_feature_flags
-            SET enabled=0, updated_by_tg_id=0, updated_at=strftime('%s','now')
-            WHERE feature_code IN ('listings','stories','chat','systemization')
-            """
-        )
+        legacy_feature_locks_removed = clear_legacy_mvp_lock_overrides(conn)
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS schema_migrations(
@@ -176,6 +171,7 @@ def prepare_release_database(
         "backup_path": str(backup_path),
         "manifest_path": str(backup_manifest_path(backup_path)),
         "integrity": "ok",
+        "legacy_feature_locks_removed": legacy_feature_locks_removed,
         "schema": schema,
     }
 
@@ -189,7 +185,7 @@ def main():
         "--backup-dir",
         default=os.environ.get("BACKUP_DIR", "backups"),
     )
-    parser.add_argument("--schema", default="v1654")
+    parser.add_argument("--schema", default="v1656-unlocked")
     parser.add_argument(
         "--retention",
         type=int,

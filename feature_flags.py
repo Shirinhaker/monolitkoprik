@@ -1,4 +1,4 @@
-"""Ko‘prik MVP funksiyalarini server tomonda boshqarish qoidalari."""
+"""Ko‘prik funksiyalarini server tomonda xavfsiz boshqarish qoidalari."""
 
 from __future__ import annotations
 
@@ -13,7 +13,28 @@ FEATURE_ENV_NAMES = {
     "stories": "MVP_STORIES_ENABLED",
     "chat": "MVP_CHAT_ENABLED",
     "systemization": "MVP_SYSTEMIZATION_ENABLED",
+    "taxi": "MVP_TAXI_ENABLED",
 }
+
+# Ushbu v1656 paketida tayyor bo‘limlar odatda ochiq. Railway Variables orqali
+# istalgan bo‘limni 0 qilib vaqtincha qayta yopish mumkin.
+FEATURE_DEFAULTS = {
+    "listings": True,
+    "stories": True,
+    "chat": True,
+    "systemization": True,
+    "taxi": True,
+}
+
+# Eski MVP migratsiyasi aynan shu to‘rtta bo‘limni updated_by_tg_id=0 bilan
+# majburan yopgan. Yangi paket faqat o‘sha texnik qulf yozuvlarini tozalaydi;
+# haqiqiy admin qo‘ygan override saqlanib qoladi.
+LEGACY_LOCK_FEATURE_CODES = (
+    "listings",
+    "stories",
+    "chat",
+    "systemization",
+)
 
 SYSTEMIZATION_PREFIXES = (
     "/api/stock",
@@ -45,18 +66,37 @@ def ensure_feature_flag_schema(conn):
     )
 
 
-def feature_snapshot(conn, environ=None):
+def feature_env_snapshot(environ=None):
+    """Railway/environment bo‘yicha boshlang‘ich feature holatini qaytaradi."""
+
     env = os.environ if environ is None else environ
-    values = {
-        code: env_flag(env_name, False, env)
+    return {
+        code: env_flag(env_name, FEATURE_DEFAULTS[code], env)
         for code, env_name in FEATURE_ENV_NAMES.items()
     }
+
+
+def feature_snapshot(conn, environ=None):
+    """Environment qiymatlari ustiga haqiqiy DB override'larini qo‘llaydi."""
+
+    values = feature_env_snapshot(environ)
     rows = conn.execute(
-        "SELECT feature_code, enabled FROM platform_feature_flags"
+        "SELECT feature_code, enabled, updated_by_tg_id "
+        "FROM platform_feature_flags"
     ).fetchall()
     for row in rows:
-        if row["feature_code"] in values:
-            values[row["feature_code"]] = bool(row["enabled"])
+        code = row["feature_code"]
+        if code not in values:
+            continue
+        # Eski MVP migratsiyasining texnik ``0`` yozuvi environmentdagi yangi
+        # ochiq holatni bosib ketmasin. Admin qo‘ygan haqiqiy override saqlanadi.
+        if (
+            code in LEGACY_LOCK_FEATURE_CODES
+            and not bool(row["enabled"])
+            and int(row["updated_by_tg_id"] or 0) == 0
+        ):
+            continue
+        values[code] = bool(row["enabled"])
     return values
 
 
@@ -92,6 +132,26 @@ def set_feature_override(
     )
 
 
+def clear_legacy_mvp_lock_overrides(conn):
+    """Eski release migratsiyasi yaratgan texnik ``0`` override'larini o‘chiradi.
+
+    ``updated_by_tg_id=0`` va ``enabled=0`` sharti foydalanuvchi/admin qo‘ygan
+    haqiqiy override'larni tegmasdan qoldiradi. Funksiya idempotent.
+    """
+
+    placeholders = ",".join("?" for _ in LEGACY_LOCK_FEATURE_CODES)
+    cursor = conn.execute(
+        f"""
+        DELETE FROM platform_feature_flags
+        WHERE feature_code IN ({placeholders})
+          AND enabled=0
+          AND updated_by_tg_id=0
+        """,
+        LEGACY_LOCK_FEATURE_CODES,
+    )
+    return max(0, int(cursor.rowcount or 0))
+
+
 def _matches_prefix(path, prefix):
     return path == prefix or path.startswith(prefix + "/")
 
@@ -112,4 +172,9 @@ def guarded_feature_for_path(path):
         return "systemization"
     if any(_matches_prefix(value, prefix) for prefix in SYSTEMIZATION_PREFIXES):
         return "systemization"
+
+    # Taxi va dostavka bir xil /api/driver hamda /api/rides oqimlaridan
+    # foydalanadi. Shu sabab bu umumiy yo‘llarni taxi flagi bilan to‘sish
+    # ishlayotgan dostavka zanjirini ham buzadi. Taxi kirish nuqtalari frontend
+    # data-feature="taxi" orqali boshqariladi; mavjud dostavka API'lari saqlanadi.
     return None
