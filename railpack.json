@@ -3,7 +3,7 @@
   "provider": "python",
   "deploy": {
     "aptPackages": ["ffmpeg"],
-    "startCommand": "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1",
+    "startCommand": "uvicorn unlocked_app:app --host 0.0.0.0 --port $PORT --workers 1",
     "healthcheckPath": "/readyz",
     "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE",
